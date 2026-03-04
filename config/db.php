@@ -1,30 +1,21 @@
 <?php
-// config/database.php
-// Central database configuration — included everywhere via autoload
+// OMDA | 12345 | DEVELOPER
 
+/**
+ * Database Connection using PDO
+ * Database: musanze_service_db
+ */
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'musanze_potato');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+$host = 'localhost';
+$dbname = 'musanze_service_db';
+$username = 'root';
+$password = '';
 
-function getDB() {
-    static $pdo = null;
-
-    if ($pdo === null) {
-        try {
-            $pdo = new PDO(
-                "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8",
-                DB_USER,
-                DB_PASS
-            );
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            die("<h3 style='color:red'>Database connection failed: " . $e->getMessage() . "</h3>");
-        }
-    }
-
-    return $pdo;
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
 }
-?>
+

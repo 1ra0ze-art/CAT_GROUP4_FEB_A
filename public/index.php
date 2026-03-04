@@ -1,82 +1,50 @@
 <?php
-session_start();
+// IRAKOZE Fredy Reg No:25/30941s
 
+/**
+ * Main Controller - public/index.php
+ * Handles POST requests to save data to MySQL
+ * Handles GET requests to fetch and display all saved records
+ */
 
-define('ROOT', dirname(__DIR__) . '/');
-define('APP',  ROOT . 'app/');
+// Include database connection
+require_once __DIR__ . '/../config/db.php';
 
-spl_autoload_register(function ($class) {
-    $locations = [
-        APP . 'models/'      . $class . '.php',
-        APP . 'controllers/' . $class . '.php',
-    ];
-    foreach ($locations as $file) {
-        if (file_exists($file)) {
-            require_once $file;
-            return;
+$success_message = '';
+$records = [];
+
+// Handle POST request - Save data to MySQL
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Sanitize and validate input
+    $client = trim($_POST['client'] ?? '');
+    $service = trim($_POST['service'] ?? '');
+    $quantity = intval($_POST['quantity'] ?? 0);
+    $price = floatval($_POST['price'] ?? 0);
+    $total = floatval($_POST['total'] ?? 0);
+    $date = date('Y-m-d');
+
+    // Validate required fields
+    if (!empty($client) && !empty($service) && $quantity > 0 && $price >= 0) {
+        try {
+            // Prepare and execute insert statement
+            $stmt = $pdo->prepare("INSERT INTO records (client, service, quantity, price, total, date) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$client, $service, $quantity, $price, $total, $date]);
+            
+            $success_message = "Record saved successfully!";
+        } catch (PDOException $e) {
+            die("Error saving record: " . $e->getMessage());
         }
     }
-});
-
-require_once APP . 'models/User.php';
-require_once APP . 'models/Supplier.php';
-require_once APP . 'models/Order.php';
-require_once APP . 'models/OrderItem.php';
-
-require_once ROOT . 'config/database.php';
-
-function redirect($url) {
-    header("Location: $url");
-    exit;
 }
 
-function requireLogin() {
-    if (!isset($_SESSION['user_id'])) {
-        redirect('?page=login');
-    }
+// Handle GET request - Fetch all records
+try {
+    $stmt = $pdo->query("SELECT client, service, total, date FROM records ORDER BY id DESC");
+    $records = $stmt->fetchAll();
+} catch (PDOException $e) {
+    die("Error fetching records: " . $e->getMessage());
 }
 
-$page = $_GET['page'] ?? 'login';
+// Include the view file
+require_once __DIR__ . '/../app/views/create.php';
 
-switch ($page) {
-
-    case 'login':
-        $controller = new AuthController();
-        $controller->login();
-        break;
-
-    case 'logout':
-        $controller = new AuthController();
-        $controller->logout();
-        break;
-
-    case 'dashboard':
-        $controller = new DashboardController();
-        $controller->index();
-        break;
-
-    case 'suppliers':
-        $controller = new SupplierController();
-        $controller->index();
-        break;
-
-    case 'suppliers-edit':
-        $controller = new SupplierController();
-        $controller->edit();
-        break;    
-
-    case 'orders':
-        $controller = new OrderController();
-        $controller->create();
-        break;
-
-    case 'receipt':
-        $controller = new ReceiptController();
-        $controller->show();
-        break;
-
-    default:
-        redirect('?page=login');
-        break;
-}
-?>
